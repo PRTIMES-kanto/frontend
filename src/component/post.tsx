@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Analysis from "./Analysis";
 
 // Zodスキーマの定義
 const formSchema = z.object({
@@ -24,6 +25,8 @@ const Post = () => {
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
+
+  const [analysisResult, setAnalysisResult] = useState<string>("");
 
   const {
     register,
@@ -51,18 +54,21 @@ const Post = () => {
     try {
       // 実際のAPI呼び出しをシミュレート
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      //   const response = await fetch("https://localhost:10000", {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify(data),
-      //   });
-      //   if (!response.ok) {
-      //     throw new Error("Network response was not ok");
-      //   }
+      const response = await fetch("https://localhost:10000", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
 
-      console.log("フォームデータ:", data);
+      const result = await response.json();
+      setAnalysisResult(result || "解析結果がありません");
+
+      console.log("フォームデータ:", result);
       setSubmitStatus("success");
 
       // 成功時はフォームをリセット
@@ -305,6 +311,8 @@ const Post = () => {
           </div>
         )}
       </form>
+
+      <Analysis originalText="" anlysisResult={analysisResult} />
     </div>
   );
 };
