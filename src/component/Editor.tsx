@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import ReactMarkdown from "react-markdown";
 
 // types.ts
 export type IssueDetail = {
@@ -55,7 +56,7 @@ export default function Editor() {
   // 送信するフォームデータを保存
   const [formData, setFormData] = useState<ArticleData | null>(null);
   // 編集モード
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [analysisResult, setAnalysisResult] = useState<Issue | null>(null);
   const [imageAnalysisResult, setImageAnalysisResult] = useState<ImageIssue[]>(
     []
@@ -410,6 +411,11 @@ export default function Editor() {
             </div>
           ) : (
             <div>
+              {/* <ReactMarkdown>
+                {`${formData?.title || "—"}
+                ${formData?.lead_paragraph || "—"}
+                ${formData?.body || "—"}`}
+              </ReactMarkdown> */}
               <h3 className="text-lg font-medium mb-2">タイトル</h3>
               <p className="mb-4">{formData?.title || "—"}</p>
               <h3 className="text-lg font-medium mb-2">リード文</h3>
@@ -487,55 +493,49 @@ export default function Editor() {
       </div>
       {/* 画像分析結果 */}
       {imageAnalysisResult.length > 0 && (
-        <div style={{ marginTop: "40px" }}>
-          <h2
-            style={{
-              fontSize: "18px",
-              fontWeight: "600",
-              marginBottom: "12px",
-            }}
-          >
-            画像分析結果
-          </h2>
+        <div className="mt-10 flex flex-col p-6">
+          <h2 className="text-lg font-semibold mb-3">画像分析結果</h2>
           {imageAnalysisResult.map((issue, idx) => (
             <div
               key={idx}
-              style={{
-                marginBottom: "24px",
-                padding: "16px",
-                border: "1px solid #e5e7eb",
-                borderRadius: "8px",
-                textAlign: "center",
-              }}
+              className="mb-6 p-4 w-auto border border-gray-200 rounded-lg shadow-sm"
             >
               {issue.url && (
                 <img
                   src={issue.url}
                   alt={`分析画像 ${idx + 1}`}
-                  style={{
-                    maxWidth: "50%",
-                    borderRadius: "8px",
-                    marginBottom: "12px",
-                    margin: "0 auto",
-                    display: "block",
-                  }}
+                  className="max-w-1/2 mx-auto mb-3 rounded-lg"
                 />
               )}
-              {issue.good && (
-                <p>
-                  <strong>Good:</strong> {issue.good}
-                </p>
-              )}
-              {issue.improvement && (
-                <p>
-                  <strong>改善点:</strong> {issue.improvement}
-                </p>
-              )}
-              {issue.suggestion && (
-                <p>
-                  <strong>次へのアクション:</strong> {issue.suggestion}
-                </p>
-              )}
+
+              <div className="w-7/12 text-start mx-auto">
+                <ul>
+                  <li>
+                    {issue.good && (
+                      <p className="text-sm text-gray-700">
+                        <span className="font-bold text-green-600">Good:</span>{" "}
+                        {issue.good}
+                      </p>
+                    )}
+                    {issue.improvement && (
+                      <p className="text-sm text-gray-700 mt-1">
+                        <span className="font-bold text-yellow-600">
+                          改善点:
+                        </span>{" "}
+                        {issue.improvement}
+                      </p>
+                    )}
+                    {issue.suggestion && (
+                      <p className="text-sm text-gray-700 mt-1">
+                        <span className="font-bold text-blue-600">
+                          次へのアクション:
+                        </span>{" "}
+                        {issue.suggestion}
+                      </p>
+                    )}
+                  </li>
+                </ul>
+              </div>
             </div>
           ))}
         </div>
