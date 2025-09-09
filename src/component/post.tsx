@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Editor from "./Editor";
 import type { ImageIssue, Issue } from "./Editor";
+
 import { formSchema, type ArticleData } from "@/schema";
 
 const Post = () => {
@@ -68,6 +69,7 @@ const Post = () => {
           suggestion: result.body.suggestion,
         },
       };
+
 
       // 画像分析は image を配列に変換
       const imageIssues: ImageIssue[] = [result.image];
@@ -217,18 +219,11 @@ const Post = () => {
         <form onSubmit={handleSubmit(onSubmit)} style={formStyles.form}>
           {fieldConfigs.map((field) => {
             const hasError = errors[field.name];
-            const currentValue = field.showCharCount
-              ? watch(field.name) ?? ""
-              : "";
+            const currentValue = field.showCharCount ? (watch(field.name) ?? "") : "";
             return (
               <div key={field.id} style={formStyles.fieldGroup}>
                 <label htmlFor={field.id} style={formStyles.label}>
-                  {field.label}
-                  {field.required && (
-                    <span style={{ color: "#ef4444", marginLeft: "4px" }}>
-                      *
-                    </span>
-                  )}
+                  {field.label}{field.required && <span style={{ color: "#ef4444", marginLeft: "4px" }}>*</span>}
                 </label>
 
                 {field.name === "main_image_url" ? (
