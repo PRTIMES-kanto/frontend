@@ -1,6 +1,7 @@
+import { Progress } from "@/components/ui/progress";
 import { formSchema, type ArticleData } from "@/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 // types.ts
@@ -15,15 +16,31 @@ export type Issue = {
   title?: IssueDetail;
 };
 
-export type EditorProps = {
-  text: string;
-  issues?: Issue[] | Issue; // 配列または単一のオブジェクトを許可
-};
-
 export default function Editor() {
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
+
+  // 進捗バー
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<number | null>(null);
+  const startFakeProgress = () => {
+    setProgress(10);
+    stopFakeProgress(); // 念のため
+    timerRef.current = window.setInterval(() => {
+      setProgress((p) => {
+        const next = p + Math.random() * 10 + 5; // 5〜15%ずつ
+        return Math.min(next, 90);
+      });
+      return 0;
+    }, 400);
+  };
+  const stopFakeProgress = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
   // 送信するフォームデータを保存
   const [formData, setFormData] = useState<ArticleData | null>(null);
@@ -49,6 +66,7 @@ export default function Editor() {
 
   const onSubmit = async (data: ArticleData) => {
     setSubmitStatus("idle");
+    startFakeProgress();
 
     try {
       setFormData(data); // 送信するデータを保存
@@ -64,14 +82,22 @@ export default function Editor() {
         throw new Error("Network response was not ok");
       }
 
+      // レスポンスが来たら 95% へ
+      setProgress(95);
+
       const result = await response.json();
       setAnalysisResult(result);
 
-      console.log("フォームデータ:", result);
+      // 成功で 100% → 少ししてリセット
+      setProgress(100);
       setSubmitStatus("success");
     } catch (error) {
       setSubmitStatus("error");
       console.error("送信エラー:", error);
+    } finally {
+      stopFakeProgress();
+      // 演出のため少し見せて０に戻す
+      setTimeout(() => setProgress(0), 600);
     }
   };
 
@@ -342,7 +368,11 @@ export default function Editor() {
           <span className="text-sm opacity-70">
             {flattenedIssues.length} 件
           </span>
-          {flattenedIssues.length === 0 ? (
+          {isSubmitting ? (
+            <div className="py-40 px-28">
+              <Progress value={progress} />
+            </div>
+          ) : flattenedIssues.length === 0 ? (
             <div className="text-center text-gray-500 mt-8">
               改善点はありません
             </div>
