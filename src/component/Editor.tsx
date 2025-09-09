@@ -1,6 +1,8 @@
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { formSchema, type ArticleData } from "@/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2Icon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -52,7 +54,8 @@ export default function Editor() {
 
   // 送信するフォームデータを保存
   const [formData, setFormData] = useState<ArticleData | null>(null);
-
+  // 編集モード
+  const [isEditing, setIsEditing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<Issue | null>(null);
   const [imageAnalysisResult, setImageAnalysisResult] = useState<ImageIssue[]>(
     []
@@ -300,126 +303,155 @@ export default function Editor() {
     <div className="w-full">
       <div className="w-full h-screen grid grid-cols-1 md:grid-cols-2">
         <section className="p-6 overflow-auto border-r">
-          <h2 className="text-xl font-semibold mb-4">校正対象</h2>
-          <div style={formStyles.container}>
-            <form
-              id="form"
-              onSubmit={handleSubmit(onSubmit)}
-              style={formStyles.form}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold mb-4">校正対象</h2>
+            <Button
+              onClick={() => setIsEditing(!isEditing)}
+              className="bg-blue-500 hover:bg-blue-600 hover:-translate-y-0.5 cursor-pointer"
             >
-              {fieldConfigs.map((field) => {
-                const hasError = errors[field.name];
-                const currentValue = field.showCharCount
-                  ? watchedFields[field.name === "title" ? 0 : 1] || ""
-                  : "";
-                return (
-                  <div key={field.id} style={formStyles.fieldGroup}>
-                    <label htmlFor={field.id} style={formStyles.label}>
-                      {field.label}
-                      {field.required && (
-                        <span style={{ color: "#ef4444", marginLeft: "4px" }}>
-                          *
-                        </span>
-                      )}
-                    </label>
-
-                    {field.name === "main_image_url" ? (
-                      <input
-                        type="url"
-                        id={field.id}
-                        {...register(field.name)}
-                        placeholder={field.placeholder}
-                        disabled={isSubmitting}
-                        style={{
-                          ...formStyles.textarea,
-                          ...(hasError ? formStyles.textareaError : {}),
-                        }}
-                      />
-                    ) : (
-                      <textarea
-                        id={field.id}
-                        {...register(field.name)}
-                        rows={field.rows}
-                        placeholder={field.placeholder}
-                        maxLength={field.maxLength}
-                        disabled={isSubmitting}
-                        style={{
-                          ...formStyles.textarea,
-                          ...(hasError ? formStyles.textareaError : {}),
-                        }}
-                        onFocus={(e) => {
-                          if (!hasError) {
-                            e.target.style.borderColor = "#3b82f6";
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(59, 130, 246, 0.1)";
-                          }
-                        }}
-                        onBlur={(e) => {
-                          if (!hasError) {
-                            e.target.style.borderColor = "#e5e7eb";
-                            e.target.style.boxShadow = "none";
-                          }
-                        }}
-                      />
-                    )}
-                    {hasError && (
-                      <span style={formStyles.error}>{hasError.message}</span>
-                    )}
-                    {field.showCharCount && field.maxLength && (
-                      <div style={formStyles.charCount}>
-                        {currentValue.length} / {field.maxLength} 文字
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {submitStatus === "success" && (
-                <div
-                  style={{
-                    ...formStyles.statusMessage,
-                    ...formStyles.successMessage,
-                  }}
-                >
-                  ✓ 予稿が正常に送信されました！
-                </div>
-              )}
-              {submitStatus === "error" && (
-                <div
-                  style={{
-                    ...formStyles.statusMessage,
-                    ...formStyles.errorMessage,
-                  }}
-                >
-                  ✗ 送信中にエラーが発生しました。もう一度お試しください。
-                </div>
-              )}
-            </form>
+              {isEditing ? "プレビュー" : "編集"}
+            </Button>
           </div>
+          {isEditing ? (
+            <div style={formStyles.container}>
+              <form
+                id="form"
+                onSubmit={handleSubmit(onSubmit)}
+                style={formStyles.form}
+              >
+                {fieldConfigs.map((field) => {
+                  const hasError = errors[field.name];
+                  const currentValue = field.showCharCount
+                    ? watchedFields[field.name === "title" ? 0 : 1] || ""
+                    : "";
+                  return (
+                    <div key={field.id} style={formStyles.fieldGroup}>
+                      <label htmlFor={field.id} style={formStyles.label}>
+                        {field.label}
+                        {field.required && (
+                          <span style={{ color: "#ef4444", marginLeft: "4px" }}>
+                            *
+                          </span>
+                        )}
+                      </label>
+
+                      {field.name === "main_image_url" ? (
+                        <input
+                          type="url"
+                          id={field.id}
+                          {...register(field.name)}
+                          placeholder={field.placeholder}
+                          disabled={isSubmitting}
+                          style={{
+                            ...formStyles.textarea,
+                            ...(hasError ? formStyles.textareaError : {}),
+                          }}
+                        />
+                      ) : (
+                        <textarea
+                          id={field.id}
+                          {...register(field.name)}
+                          rows={field.rows}
+                          placeholder={field.placeholder}
+                          maxLength={field.maxLength}
+                          disabled={isSubmitting}
+                          style={{
+                            ...formStyles.textarea,
+                            ...(hasError ? formStyles.textareaError : {}),
+                          }}
+                          onFocus={(e) => {
+                            if (!hasError) {
+                              e.target.style.borderColor = "#3b82f6";
+                              e.target.style.boxShadow =
+                                "0 0 0 3px rgba(59, 130, 246, 0.1)";
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (!hasError) {
+                              e.target.style.borderColor = "#e5e7eb";
+                              e.target.style.boxShadow = "none";
+                            }
+                          }}
+                        />
+                      )}
+                      {hasError && (
+                        <span style={formStyles.error}>{hasError.message}</span>
+                      )}
+                      {field.showCharCount && field.maxLength && (
+                        <div style={formStyles.charCount}>
+                          {currentValue.length} / {field.maxLength} 文字
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {submitStatus === "success" && (
+                  <div
+                    style={{
+                      ...formStyles.statusMessage,
+                      ...formStyles.successMessage,
+                    }}
+                  >
+                    ✓ 予稿が正常に送信されました！
+                  </div>
+                )}
+                {submitStatus === "error" && (
+                  <div
+                    style={{
+                      ...formStyles.statusMessage,
+                      ...formStyles.errorMessage,
+                    }}
+                  >
+                    ✗ 送信中にエラーが発生しました。もう一度お試しください。
+                  </div>
+                )}
+              </form>
+            </div>
+          ) : (
+            <div>
+              <h3 className="text-lg font-medium mb-2">タイトル</h3>
+              <p className="mb-4">{formData?.title || "—"}</p>
+              <h3 className="text-lg font-medium mb-2">リード文</h3>
+              <p className="mb-4">{formData?.lead_paragraph || "—"}</p>
+              <h3 className="text-lg font-medium mb-2">本文</h3>
+              <p className="mb-4 whitespace-pre-wrap">
+                {formData?.body || "—"}
+              </p>
+              <h3 className="text-lg font-medium mb-2">メイン画像</h3>
+              {formData?.main_image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={formData.main_image_url}
+                  alt="Main"
+                  className="max-w-full h-auto rounded-lg"
+                />
+              ) : (
+                <p>—</p>
+              )}
+            </div>
+          )}
         </section>
         <aside className="p-6 overflow-auto">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">改善点</h2>
-            <button
+            <Button
               form="form"
               type="submit"
               disabled={isSubmitting}
-              style={formStyles.submitButton}
-              onMouseOver={(e) => {
-                if (!isSubmitting) {
-                  e.currentTarget.style.backgroundColor = "#2563eb";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isSubmitting) {
-                  e.currentTarget.style.backgroundColor = "#3b82f6";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }
-              }}
+              className={`
+    text-white text-base 
+    transition-all duration-200 
+    ${
+      isSubmitting
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-blue-500 hover:bg-blue-600 hover:-translate-y-0.5 cursor-pointer"
+    }
+  `}
             >
-              {isSubmitting ? "送信中..." : " 校正"}
-            </button>
+              {isSubmitting && <Loader2Icon className="animate-spin" />}
+              {isSubmitting ? "分析中..." : " 校正"}
+            </Button>
           </div>
           <span className="text-sm opacity-70">
             {flattenedIssues.length} 件
