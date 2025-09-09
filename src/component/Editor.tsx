@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 
 // types.ts
 export type IssueDetail = {
+  good: string;
   improvement: string;
   suggestion: string;
 };
@@ -14,6 +15,13 @@ export type Issue = {
   body?: IssueDetail;
   lead?: IssueDetail;
   title?: IssueDetail;
+};
+
+export type ImageIssue = {
+  url?: string;
+  good?: string;
+  improvement?: string;
+  suggestion?: string;
 };
 
 export default function Editor() {
@@ -45,7 +53,10 @@ export default function Editor() {
   // 送信するフォームデータを保存
   const [formData, setFormData] = useState<ArticleData | null>(null);
 
-  const [analysisResult, setAnalysisResult] = useState<Issue[]>([]);
+  const [analysisResult, setAnalysisResult] = useState<Issue | null>(null);
+  const [imageAnalysisResult, setImageAnalysisResult] = useState<ImageIssue[]>(
+    []
+  );
 
   const {
     register,
@@ -58,6 +69,7 @@ export default function Editor() {
       title: "",
       lead_paragraph: "",
       body: "",
+      main_image_url: "",
     },
   });
 
@@ -86,7 +98,30 @@ export default function Editor() {
       setProgress(95);
 
       const result = await response.json();
-      setAnalysisResult(result);
+
+      // 文章分析は body, lead, title を配列に変換して Editor に渡す
+      const textIssues: Issue = {
+        title: {
+          good: result.title.good,
+          improvement: result.title.improvement,
+          suggestion: result.title.suggestion,
+        },
+        lead: {
+          good: result.lead.good,
+          improvement: result.lead.improvement,
+          suggestion: result.lead.suggestion,
+        },
+        body: {
+          good: result.body.good,
+          improvement: result.body.improvement,
+          suggestion: result.body.suggestion,
+        },
+      };
+
+      // 画像分析は image を配列に変換
+      const imageIssues: ImageIssue[] = [result.image];
+      setAnalysisResult(textIssues);
+      setImageAnalysisResult(imageIssues);
 
       // 成功で 100% → 少ししてリセット
       setProgress(100);
@@ -131,6 +166,14 @@ export default function Editor() {
       label: "本文",
       placeholder: "記事の本文を入力してください（10文字以上）",
       rows: 8,
+      required: true,
+    },
+    {
+      id: "main_image_url",
+      name: "main_image_url" as const,
+      label: "メイン画像URL",
+      placeholder: "https://example.com/image.jpg",
+      rows: 1,
       required: true,
     },
   ];
@@ -250,7 +293,7 @@ export default function Editor() {
     return flattenedIssues;
   };
 
-  const normalizedIssues = normalizeIssues(analysisResult);
+  const normalizedIssues = normalizeIssues(analysisResult ?? undefined);
   const flattenedIssues = flattenIssues(normalizedIssues);
 
   return (
@@ -279,31 +322,46 @@ export default function Editor() {
                         </span>
                       )}
                     </label>
-                    <textarea
-                      id={field.id}
-                      {...register(field.name)}
-                      rows={field.rows}
-                      placeholder={field.placeholder}
-                      maxLength={field.maxLength}
-                      disabled={isSubmitting}
-                      style={{
-                        ...formStyles.textarea,
-                        ...(hasError ? formStyles.textareaError : {}),
-                      }}
-                      onFocus={(e) => {
-                        if (!hasError) {
-                          e.target.style.borderColor = "#3b82f6";
-                          e.target.style.boxShadow =
-                            "0 0 0 3px rgba(59, 130, 246, 0.1)";
-                        }
-                      }}
-                      onBlur={(e) => {
-                        if (!hasError) {
-                          e.target.style.borderColor = "#e5e7eb";
-                          e.target.style.boxShadow = "none";
-                        }
-                      }}
-                    />
+
+                    {field.name === "main_image_url" ? (
+                      <input
+                        type="url"
+                        id={field.id}
+                        {...register(field.name)}
+                        placeholder={field.placeholder}
+                        disabled={isSubmitting}
+                        style={{
+                          ...formStyles.textarea,
+                          ...(hasError ? formStyles.textareaError : {}),
+                        }}
+                      />
+                    ) : (
+                      <textarea
+                        id={field.id}
+                        {...register(field.name)}
+                        rows={field.rows}
+                        placeholder={field.placeholder}
+                        maxLength={field.maxLength}
+                        disabled={isSubmitting}
+                        style={{
+                          ...formStyles.textarea,
+                          ...(hasError ? formStyles.textareaError : {}),
+                        }}
+                        onFocus={(e) => {
+                          if (!hasError) {
+                            e.target.style.borderColor = "#3b82f6";
+                            e.target.style.boxShadow =
+                              "0 0 0 3px rgba(59, 130, 246, 0.1)";
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!hasError) {
+                            e.target.style.borderColor = "#e5e7eb";
+                            e.target.style.boxShadow = "none";
+                          }
+                        }}
+                      />
+                    )}
                     {hasError && (
                       <span style={formStyles.error}>{hasError.message}</span>
                     )}
@@ -381,7 +439,11 @@ export default function Editor() {
                   <div className="text-xs font-medium mb-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-md inline-block">
                     {issue.type}
                   </div>
-                  <div className="text-sm font-medium mb-1">検出内容</div>
+                  <div className="text-sm font-medium mb-1">良い点</div>
+                  <p className="mb-2">{issue.good || "—"}</p>
+                  <div className="text-sm font-medium mb-1">
+                    もっと良くなるには？
+                  </div>
                   <p className="mb-2">{issue.improvement || "—"}</p>
                   <div className="text-sm font-medium mb-1">提案</div>
                   <p className="text-slate-700">{issue.suggestion || "—"}</p>
@@ -391,6 +453,61 @@ export default function Editor() {
           )}
         </aside>
       </div>
+      {/* 画像分析結果 */}
+      {imageAnalysisResult.length > 0 && (
+        <div style={{ marginTop: "40px" }}>
+          <h2
+            style={{
+              fontSize: "18px",
+              fontWeight: "600",
+              marginBottom: "12px",
+            }}
+          >
+            画像分析結果
+          </h2>
+          {imageAnalysisResult.map((issue, idx) => (
+            <div
+              key={idx}
+              style={{
+                marginBottom: "24px",
+                padding: "16px",
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                textAlign: "center",
+              }}
+            >
+              {issue.url && (
+                <img
+                  src={issue.url}
+                  alt={`分析画像 ${idx + 1}`}
+                  style={{
+                    maxWidth: "50%",
+                    borderRadius: "8px",
+                    marginBottom: "12px",
+                    margin: "0 auto",
+                    display: "block",
+                  }}
+                />
+              )}
+              {issue.good && (
+                <p>
+                  <strong>Good:</strong> {issue.good}
+                </p>
+              )}
+              {issue.improvement && (
+                <p>
+                  <strong>改善点:</strong> {issue.improvement}
+                </p>
+              )}
+              {issue.suggestion && (
+                <p>
+                  <strong>次へのアクション:</strong> {issue.suggestion}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
