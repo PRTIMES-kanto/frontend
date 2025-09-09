@@ -15,4 +15,4 @@ export const formSchema = z.object({
   // contact: z.string().min(1, "連絡先は必須です"),
 });
 
-export type FormData = z.infer<typeof formSchema>;
+export type ArticleData = z.infer<typeof formSchema>;

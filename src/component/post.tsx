@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Editor from "./Editor";
 import type { Issue } from "./Editor";
-import { formSchema, type FormData } from "@/schema";
+import { formSchema, type ArticleData } from "@/schema";
 
 const Post = () => {
   const [submitStatus, setSubmitStatus] = useState<
@@ -11,7 +11,7 @@ const Post = () => {
   >("idle");
 
   // 送信するフォームデータを保存
-  const [formData, setFormData] = useState<FormData | null>(null);
+  const [formData, setFormData] = useState<ArticleData | null>(null);
 
   const [analysisResult, setAnalysisResult] = useState<Issue[]>([]);
 
@@ -20,7 +20,7 @@ const Post = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
-  } = useForm<FormData>({
+  } = useForm<ArticleData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
@@ -32,7 +32,7 @@ const Post = () => {
   // 文字数カウント用
   const watchedFields = watch(["title", "lead_paragraph"]);
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: ArticleData) => {
     setSubmitStatus("idle");
 
     try {
@@ -288,8 +288,6 @@ const Post = () => {
           )}
         </form>
       </div>
-
-      <Editor text="aaaaaaaaaa" issues={analysisResult} />
     </div>
   );
 };

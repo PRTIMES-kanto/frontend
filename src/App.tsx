@@ -1,11 +1,12 @@
 import "./App.css";
+import Editor from "./component/Editor";
 import Post from "./component/post";
 
 function App() {
   return (
-    <>
-      <Post />
-    </>
+    <div className="m-8">
+      <Editor />
+    </div>
   );
 }
 
