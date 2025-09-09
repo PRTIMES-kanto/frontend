@@ -16,6 +16,13 @@ export type EditorProps = {
   issues?: Issue[] | Issue; // 配列または単一のオブジェクトを許可
 };
 
+export type ImageIssue = {
+  url?: string;
+  good?: string;
+  improvement?: string;
+  suggestion?: string;
+}
+
 export default function ProofreadingEditor({
   text,
   issues = [], // デフォルト値を設定
