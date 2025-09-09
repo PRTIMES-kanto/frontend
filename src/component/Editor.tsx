@@ -254,9 +254,8 @@ export default function Editor() {
   const flattenedIssues = flattenIssues(normalizedIssues);
 
   return (
-    <div className="w-full ">
+    <div className="w-full">
       <div className="w-full h-screen grid grid-cols-1 md:grid-cols-2">
-        {/* 左：本文 */}
         <section className="p-6 overflow-auto border-r">
           <h2 className="text-xl font-semibold mb-4">校正対象</h2>
           <div style={formStyles.container}>
@@ -340,7 +339,6 @@ export default function Editor() {
             </form>
           </div>
         </section>
-        {/* 右：改善点リスト */}
         <aside className="p-6 overflow-auto">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">改善点</h2>
