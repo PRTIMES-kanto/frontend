@@ -1,47 +1,31 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Analysis from "./Analysis";
-
-// Zodスキーマの定義
-const formSchema = z.object({
-  title: z
-    .string()
-    .min(1, "タイトルは必須です")
-    .max(100, "タイトルは100文字以内で入力してください"),
-  lead_paragraph: z.string().max(200, "要約は200文字以内で入力してください"),
-  image_url: z.string(),
-  body: z
-    .string()
-    .min(1, "本文は必須です")
-    .min(10, "本文は10文字以上で入力してください"),
-  contact: z.string().min(1, "連絡先は必須です"),
-});
-
-type FormData = z.infer<typeof formSchema>;
+import Editor from "./Editor";
+import type { Issue } from "./Editor";
+import { formSchema, type FormData } from "@/schema";
 
 const Post = () => {
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
 
-  const [analysisResult, setAnalysisResult] = useState<string>("");
+  // 送信するフォームデータを保存
+  const [formData, setFormData] = useState<FormData | null>(null);
+
+  const [analysisResult, setAnalysisResult] = useState<Issue[]>([]);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    reset,
     watch,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       lead_paragraph: "",
-      image_url: "",
       body: "",
-      contact: "",
     },
   });
 
@@ -52,9 +36,9 @@ const Post = () => {
     setSubmitStatus("idle");
 
     try {
-      // 実際のAPI呼び出しをシミュレート
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      const response = await fetch("https://localhost:10000", {
+      setFormData(data); // 送信するデータを保存
+
+      const response = await fetch("http://localhost:8080/review", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,18 +50,19 @@ const Post = () => {
       }
 
       const result = await response.json();
-      setAnalysisResult(result || "解析結果がありません");
+      setAnalysisResult(result);
 
       console.log("フォームデータ:", result);
       setSubmitStatus("success");
-
-      // 成功時はフォームをリセット
-      reset();
     } catch (error) {
       setSubmitStatus("error");
       console.error("送信エラー:", error);
     }
   };
+
+  useEffect(() => {
+    console.log("Analysis Result:", analysisResult);
+  }, [analysisResult]);
 
   const fieldConfigs = [
     {
@@ -106,21 +91,6 @@ const Post = () => {
       rows: 4,
       maxLength: 200,
       showCharCount: true,
-    },
-    {
-      id: "image_url",
-      name: "image_url" as const,
-      label: "画像URL",
-      placeholder:
-        "画像URLを入力してください（例: https://example.com/image.jpg）",
-      rows: 2,
-    },
-    {
-      id: "contact",
-      name: "contact" as const,
-      label: "連絡先",
-      placeholder: "連絡先を入力してください",
-      rows: 3,
     },
   ];
 
@@ -214,105 +184,112 @@ const Post = () => {
   };
 
   return (
-    <div style={formStyles.container}>
-      <h1 style={formStyles.header}>予稿フォーム</h1>
+    <div>
+      <div style={formStyles.container}>
+        <h1 style={formStyles.header}>予稿フォーム</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} style={formStyles.form}>
-        {fieldConfigs.map((field) => {
-          const hasError = errors[field.name];
-          const currentValue = field.showCharCount
-            ? watchedFields[field.name === "title" ? 0 : 1] || ""
-            : "";
+        <form onSubmit={handleSubmit(onSubmit)} style={formStyles.form}>
+          {fieldConfigs.map((field) => {
+            const hasError = errors[field.name];
+            const currentValue = field.showCharCount
+              ? watchedFields[field.name === "title" ? 0 : 1] || ""
+              : "";
 
-          return (
-            <div key={field.id} style={formStyles.fieldGroup}>
-              <label htmlFor={field.id} style={formStyles.label}>
-                {field.label}
-                {field.required && (
-                  <span style={{ color: "#ef4444", marginLeft: "4px" }}>*</span>
+            return (
+              <div key={field.id} style={formStyles.fieldGroup}>
+                <label htmlFor={field.id} style={formStyles.label}>
+                  {field.label}
+                  {field.required && (
+                    <span style={{ color: "#ef4444", marginLeft: "4px" }}>
+                      *
+                    </span>
+                  )}
+                </label>
+
+                <textarea
+                  id={field.id}
+                  {...register(field.name)}
+                  rows={field.rows}
+                  placeholder={field.placeholder}
+                  maxLength={field.maxLength}
+                  disabled={isSubmitting}
+                  style={{
+                    ...formStyles.textarea,
+                    ...(hasError ? formStyles.textareaError : {}),
+                  }}
+                  onFocus={(e) => {
+                    if (!hasError) {
+                      e.target.style.borderColor = "#3b82f6";
+                      e.target.style.boxShadow =
+                        "0 0 0 3px rgba(59, 130, 246, 0.1)";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (!hasError) {
+                      e.target.style.borderColor = "#e5e7eb";
+                      e.target.style.boxShadow = "none";
+                    }
+                  }}
+                />
+
+                {hasError && (
+                  <span style={formStyles.error}>{hasError.message}</span>
                 )}
-              </label>
 
-              <textarea
-                id={field.id}
-                {...register(field.name)}
-                rows={field.rows}
-                placeholder={field.placeholder}
-                maxLength={field.maxLength}
-                disabled={isSubmitting}
-                style={{
-                  ...formStyles.textarea,
-                  ...(hasError ? formStyles.textareaError : {}),
-                }}
-                onFocus={(e) => {
-                  if (!hasError) {
-                    e.target.style.borderColor = "#3b82f6";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(59, 130, 246, 0.1)";
-                  }
-                }}
-                onBlur={(e) => {
-                  if (!hasError) {
-                    e.target.style.borderColor = "#e5e7eb";
-                    e.target.style.boxShadow = "none";
-                  }
-                }}
-              />
+                {field.showCharCount && field.maxLength && (
+                  <div style={formStyles.charCount}>
+                    {currentValue.length} / {field.maxLength} 文字
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-              {hasError && (
-                <span style={formStyles.error}>{hasError.message}</span>
-              )}
-
-              {field.showCharCount && field.maxLength && (
-                <div style={formStyles.charCount}>
-                  {currentValue.length} / {field.maxLength} 文字
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          style={formStyles.submitButton}
-          onMouseOver={(e) => {
-            if (!isSubmitting) {
-              e.currentTarget.style.backgroundColor = "#2563eb";
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }
-          }}
-          onMouseOut={(e) => {
-            if (!isSubmitting) {
-              e.currentTarget.style.backgroundColor = "#3b82f6";
-              e.currentTarget.style.transform = "translateY(0)";
-            }
-          }}
-        >
-          {isSubmitting ? "送信中..." : "投稿する"}
-        </button>
-
-        {submitStatus === "success" && (
-          <div
-            style={{
-              ...formStyles.statusMessage,
-              ...formStyles.successMessage,
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            style={formStyles.submitButton}
+            onMouseOver={(e) => {
+              if (!isSubmitting) {
+                e.currentTarget.style.backgroundColor = "#2563eb";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }
+            }}
+            onMouseOut={(e) => {
+              if (!isSubmitting) {
+                e.currentTarget.style.backgroundColor = "#3b82f6";
+                e.currentTarget.style.transform = "translateY(0)";
+              }
             }}
           >
-            ✓ 予稿が正常に送信されました！
-          </div>
-        )}
+            {isSubmitting ? "送信中..." : "投稿する"}
+          </button>
 
-        {submitStatus === "error" && (
-          <div
-            style={{ ...formStyles.statusMessage, ...formStyles.errorMessage }}
-          >
-            ✗ 送信中にエラーが発生しました。もう一度お試しください。
-          </div>
-        )}
-      </form>
+          {submitStatus === "success" && (
+            <div
+              style={{
+                ...formStyles.statusMessage,
+                ...formStyles.successMessage,
+              }}
+            >
+              ✓ 予稿が正常に送信されました！
+            </div>
+          )}
 
-      <Analysis originalText="" anlysisResult={analysisResult} />
+          {submitStatus === "error" && (
+            <div
+              style={{
+                ...formStyles.statusMessage,
+                ...formStyles.errorMessage,
+              }}
+            >
+              ✗ 送信中にエラーが発生しました。もう一度お試しください。
+            </div>
+          )}
+        </form>
+      </div>
+
+      <Editor text="aaaaaaaaaa" issues={analysisResult} />
     </div>
   );
 };

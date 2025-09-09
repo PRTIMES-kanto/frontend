@@ -16,7 +16,9 @@ const Analysis = ({ originalText, anlysisResult }: Props) => {
       <ResizablePanel>{originalText}</ResizablePanel>
       <ResizableHandle />
       <ResizablePanel>
-        <pre>{anlysisResult}</pre>
+        <div className="">
+          <pre>{anlysisResult}</pre>
+        </div>
       </ResizablePanel>
     </ResizablePanelGroup>
   );
