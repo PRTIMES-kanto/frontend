@@ -1,6 +1,6 @@
 // types.ts
 export type IssueDetail = {
-  good?: string;
+  good: string;
   improvement: string;
   suggestion: string;
 };
@@ -84,7 +84,11 @@ export default function ProofreadingEditor({
                 <div className="text-xs font-medium mb-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-md inline-block">
                   {issue.type}
                 </div>
-                <div className="text-sm font-medium mb-1">検出内容</div>
+                <div className="text-sm font-medium mb-1">良い点</div>
+                <p className="mb-2">{issue.good || "—"}</p>
+                <div className="text-sm font-medium mb-1">
+                  もっと良くなるには？
+                </div>
                 <p className="mb-2">{issue.improvement || "—"}</p>
                 <div className="text-sm font-medium mb-1">提案</div>
                 <p className="text-slate-700">{issue.suggestion || "—"}</p>
