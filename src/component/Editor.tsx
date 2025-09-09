@@ -1,5 +1,6 @@
 // types.ts
 export type IssueDetail = {
+  good?: string;
   improvement: string;
   suggestion: string;
 };
@@ -14,6 +15,13 @@ export type EditorProps = {
   text: string;
   issues?: Issue[] | Issue; // 配列または単一のオブジェクトを許可
 };
+
+export type ImageIssue = {
+  url?: string;
+  good?: string;
+  improvement?: string;
+  suggestion?: string;
+}
 
 export default function ProofreadingEditor({
   text,
