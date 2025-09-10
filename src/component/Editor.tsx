@@ -461,7 +461,7 @@ export default function Editor() {
   `}
             >
               {isSubmitting && <Loader2Icon className="animate-spin" />}
-              {isSubmitting ? "分析中..." : " 校正"}
+              {isSubmitting ? "分析中..." : "レビュー"}
             </Button>
           </div>
           <span className="text-sm opacity-70">
