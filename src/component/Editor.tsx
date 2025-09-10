@@ -6,6 +6,8 @@ import { Loader2Icon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import ReactMarkdown from "react-markdown";
+import { set } from "zod";
+import { is } from "zod/v4/locales";
 
 // types.ts
 export type IssueDetail = {
@@ -16,7 +18,7 @@ export type IssueDetail = {
 
 export type Issue = {
   body: IssueDetail;
-  lead: IssueDetail;
+  lead_paragraph: IssueDetail;
   title: IssueDetail;
 };
 
@@ -110,7 +112,7 @@ export default function Editor() {
           improvement: result.title.improvement,
           suggestion: result.title.suggestion,
         },
-        lead: {
+        lead_paragraph: {
           good: result.lead.good,
           improvement: result.lead.improvement,
           suggestion: result.lead.suggestion,
@@ -142,6 +144,7 @@ export default function Editor() {
 
   useEffect(() => {
     console.log("Analysis Result:", analysisResult);
+    setIsEditing(false); // 送信後にプレビューモードに切り替え
   }, [analysisResult]);
 
   const fieldConfigs = [
@@ -286,8 +289,8 @@ export default function Editor() {
       if (issue?.title) {
         flattenedIssues.push({ ...issue.title, type: "タイトル" });
       }
-      if (issue?.lead) {
-        flattenedIssues.push({ ...issue.lead, type: "リード文" });
+      if (issue?.lead_paragraph) {
+        flattenedIssues.push({ ...issue.lead_paragraph, type: "リード文" });
       }
       if (issue?.body) {
         flattenedIssues.push({ ...issue.body, type: "本文" });
@@ -444,12 +447,14 @@ export default function Editor() {
             <Button
               form="form"
               type="submit"
-              disabled={isSubmitting}
+              disabled={isEditing && isSubmitting}
               className={`
     text-white text-base 
     transition-all duration-200 
     ${
-      isSubmitting
+      !isEditing
+        ? "bg-gray-300 hover:bg-gray-300 cursor-not-allowed"
+        : isSubmitting
         ? "bg-gray-400 cursor-not-allowed"
         : "bg-blue-500 hover:bg-blue-600 hover:-translate-y-0.5 cursor-pointer"
     }
@@ -465,6 +470,7 @@ export default function Editor() {
           {isSubmitting ? (
             <div className="py-40 px-28">
               <Progress value={progress} />
+              <div className="text-center pt-0.5">ただいま分析中です...</div>
             </div>
           ) : flattenedIssues.length === 0 ? (
             <div className="text-center text-gray-500 mt-8">
@@ -477,14 +483,14 @@ export default function Editor() {
                   <div className="text-xs font-medium mb-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-md inline-block">
                     {issue.type}
                   </div>
-                  <div className="text-sm font-medium mb-1">良い点</div>
+                  <div className="text-md font-bold mb-1">良い点</div>
                   <p className="mb-2">{issue.good || "—"}</p>
-                  <div className="text-sm font-medium mb-1">
+                  <div className="text-md font-bold mb-1">
                     もっと良くなるには？
                   </div>
                   <p className="mb-2">{issue.improvement || "—"}</p>
-                  <div className="text-sm font-medium mb-1">提案</div>
-                  <p className="text-slate-700">{issue.suggestion || "—"}</p>
+                  <div className="text-md font-bold mb-1">提案</div>
+                  <p className="mb-2">{issue.suggestion || "—"}</p>
                 </li>
               ))}
             </ul>
@@ -507,18 +513,19 @@ export default function Editor() {
                   className="max-w-1/2 mx-auto mb-3 rounded-lg"
                 />
               )}
-              <div className="w-7/12 text-start mx-auto">
+              <div className="w-6/12 text-start mx-auto">
                 <ul>
-                  <h3 className="font-bold ">Good:</h3>
-                  <p className="text-sm text-gray-700">{issue.good}</p>
-                  <h3 className="font-bold ">改善点:</h3>
-                  <p className="text-sm text-gray-700 mt-1">
-                    {issue.improvement}
-                  </p>
-                  <h3 className="font-bold ">次へのアクション:</h3>{" "}
-                  <p className="text-sm text-gray-700 mt-1">
-                    {issue.suggestion}
-                  </p>
+                  <div className="text-xs font-medium mb-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-md inline-block">
+                    メイン画像
+                  </div>
+                  <div className="text-md font-bold mb-1">良い点</div>
+                  <p className="">{issue.good}</p>
+                  <div className="text-md font-bold mb-1">
+                    もっと良くなるには？
+                  </div>
+                  <p className="mt-1">{issue.improvement}</p>
+                  <div className="text-md font-bold mb-1">提案</div>{" "}
+                  <p className="mt-1">{issue.suggestion}</p>
                 </ul>
               </div>
             </div>
