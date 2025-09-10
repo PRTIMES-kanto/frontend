@@ -15,9 +15,9 @@ export type IssueDetail = {
 };
 
 export type Issue = {
-  body?: IssueDetail;
-  lead?: IssueDetail;
-  title?: IssueDetail;
+  body: IssueDetail;
+  lead: IssueDetail;
+  title: IssueDetail;
 };
 
 export type ImageIssue = {
@@ -86,7 +86,7 @@ export default function Editor() {
 
     try {
       setFormData(data); // 送信するデータを保存
-
+      console.log("送信データ:", data);
       const response = await fetch("http://localhost:8080/review", {
         method: "POST",
         headers: {
@@ -507,33 +507,18 @@ export default function Editor() {
                   className="max-w-1/2 mx-auto mb-3 rounded-lg"
                 />
               )}
-
               <div className="w-7/12 text-start mx-auto">
                 <ul>
-                  <li>
-                    {issue.good && (
-                      <p className="text-sm text-gray-700">
-                        <span className="font-bold text-green-600">Good:</span>{" "}
-                        {issue.good}
-                      </p>
-                    )}
-                    {issue.improvement && (
-                      <p className="text-sm text-gray-700 mt-1">
-                        <span className="font-bold text-yellow-600">
-                          改善点:
-                        </span>{" "}
-                        {issue.improvement}
-                      </p>
-                    )}
-                    {issue.suggestion && (
-                      <p className="text-sm text-gray-700 mt-1">
-                        <span className="font-bold text-blue-600">
-                          次へのアクション:
-                        </span>{" "}
-                        {issue.suggestion}
-                      </p>
-                    )}
-                  </li>
+                  <h3 className="font-bold ">Good:</h3>
+                  <p className="text-sm text-gray-700">{issue.good}</p>
+                  <h3 className="font-bold ">改善点:</h3>
+                  <p className="text-sm text-gray-700 mt-1">
+                    {issue.improvement}
+                  </p>
+                  <h3 className="font-bold ">次へのアクション:</h3>{" "}
+                  <p className="text-sm text-gray-700 mt-1">
+                    {issue.suggestion}
+                  </p>
                 </ul>
               </div>
             </div>
